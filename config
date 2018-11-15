@@ -225,6 +225,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-unknown-OpenUNIX${VERSION}"; exit 0
 	;;
 
+    OS400:*)
+	echo "${MACHINE}-ibm-os400"; exit 0
+	;;
+
     OSF1:*:*:*alpha*)
 	OSFMAJOR=`echo ${RELEASE}| sed -e 's/^V\([0-9]*\)\..*$/\1/'`
 	case "$OSFMAJOR" in
@@ -809,6 +813,27 @@ case "$GUESSOS" in
 	if (lsattr -E -O -l `lsdev -c processor|awk '{print$1;exit}'` | grep -i powerpc) >/dev/null 2>&1; then
 	    :	# this applies even to Power3 and later, as they return PowerPC_POWER[345]
 	else
+	    options="$options no-asm"
+	fi
+	;;
+  *-os400)
+	# Currently, we only support building in PASE, not ILE
+	OBJECT_MODE=${OBJECT_MODE:-64}
+	if [ "$CC" = "gcc" ]; then
+	    OUT="pase-gcc"
+          if [ $OBJECT_MODE -eq 64 ]; then
+            echo 'Your $OBJECT_MODE was found to be set to 64'
+            OUT="pase64-gcc"
+          fi
+	else
+	    OUT="pase-cc"
+          if [ $OBJECT_MODE -eq 64 ]; then
+            echo 'Your $OBJECT_MODE was found to be set to 64'
+            OUT="pase64-cc"
+          fi
+	fi
+	if [ ${VERSION}${RELEASE} -lt 72 ]; then
+	    # VSX/Altivec not supported until IBM i 7.2
 	    options="$options no-asm"
 	fi
 	;;
